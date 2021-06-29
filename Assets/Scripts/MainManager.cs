@@ -1,9 +1,13 @@
+using System;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MainManager : MonoBehaviour
 {
+    public static event Action<int> NewHighscore;
+
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
@@ -13,8 +17,39 @@ public class MainManager : MonoBehaviour
     
     private bool m_Started = false;
     private int m_Points;
+    private int m_Highscore;
     
     private bool m_GameOver = false;
+
+    [System.Serializable]
+    class SaveData
+    {
+        public int highscore;
+    }
+
+    public void SaveHighscore()
+    {
+        SaveData data = new SaveData();
+        data.highscore = m_Highscore;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/highscore.json", json);
+    }
+
+    public void LoadHighscore()
+    {
+        string path = Application.persistentDataPath + "/highscore.json";
+
+        if(File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            m_Highscore = data.highscore;
+            NewHighscore?.Invoke(m_Highscore);
+        }
+    }
     
     // Start is called before the first frame update
     void Start()
@@ -33,6 +68,8 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        LoadHighscore();
     }
 
     private void Update()
@@ -41,8 +78,9 @@ public class MainManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                LoadHighscore();
                 m_Started = true;
-                float randomDirection = Random.Range(-1.0f, 1.0f);
+                float randomDirection = UnityEngine.Random.Range(-1.0f, 1.0f);
                 Vector3 forceDir = new Vector3(randomDirection, 1, 0);
                 forceDir.Normalize();
 
@@ -62,6 +100,14 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
+
+        if(m_Points > m_Highscore)
+        {
+            m_Highscore = m_Points;
+            SaveHighscore();
+            NewHighscore?.Invoke(m_Highscore);
+        }
+
         ScoreText.text = $"Score : {m_Points}";
     }
 

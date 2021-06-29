@@ -5,8 +5,8 @@ public class HUDHandler : MonoBehaviour
 {
     [SerializeField] Text highscoreAndName;
 
-    int highscore = 0;
     string playerName;
+    int highscore = 0;
 
     private void Awake()
     {
@@ -25,8 +25,18 @@ public class HUDHandler : MonoBehaviour
         highscoreAndName.text = $"Highscore: { highscore } Name: { playerName }";
     }
 
-    private void UpdateHighscore()
+    private void UpdateHighscore(int highscore)
     {
         highscoreAndName.text = $"Highscore: { highscore } Name: { playerName }";
+    }
+
+    private void OnEnable()
+    {
+        MainManager.NewHighscore += UpdateHighscore;
+    }
+
+    private void OnDisable()
+    {
+        MainManager.NewHighscore -= UpdateHighscore;
     }
 }
