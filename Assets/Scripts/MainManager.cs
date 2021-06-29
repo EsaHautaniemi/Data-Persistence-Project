@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class MainManager : MonoBehaviour
 {
-    public static event Action<int> NewHighscore;
+    public static event Action<string, int> NewHighscore;
 
     public Brick BrickPrefab;
     public int LineCount = 6;
@@ -17,20 +17,25 @@ public class MainManager : MonoBehaviour
     
     private bool m_Started = false;
     private int m_Points;
-    private int m_Highscore;
+
+    private string m_HighscoreName;
+    private int m_HighscorePoints;
     
     private bool m_GameOver = false;
 
     [System.Serializable]
     class SaveData
     {
-        public int highscore;
+        public string highscoreName;
+        public int highscorePoints;
     }
 
     public void SaveHighscore()
     {
         SaveData data = new SaveData();
-        data.highscore = m_Highscore;
+
+        data.highscoreName = m_HighscoreName;
+        data.highscorePoints = m_HighscorePoints;
 
         string json = JsonUtility.ToJson(data);
 
@@ -46,8 +51,10 @@ public class MainManager : MonoBehaviour
             string json = File.ReadAllText(path);
             SaveData data = JsonUtility.FromJson<SaveData>(json);
 
-            m_Highscore = data.highscore;
-            NewHighscore?.Invoke(m_Highscore);
+            m_HighscoreName = data.highscoreName; 
+            m_HighscorePoints = data.highscorePoints;
+
+            NewHighscore?.Invoke(m_HighscoreName, m_HighscorePoints);
         }
     }
     
@@ -101,11 +108,13 @@ public class MainManager : MonoBehaviour
     {
         m_Points += point;
 
-        if(m_Points > m_Highscore)
+        if(m_Points > m_HighscorePoints)
         {
-            m_Highscore = m_Points;
+            m_HighscoreName = MenuManager.Instance.playerName;
+            m_HighscorePoints = m_Points;
+
             SaveHighscore();
-            NewHighscore?.Invoke(m_Highscore);
+            NewHighscore?.Invoke(m_HighscoreName, m_HighscorePoints);
         }
 
         ScoreText.text = $"Score : {m_Points}";
